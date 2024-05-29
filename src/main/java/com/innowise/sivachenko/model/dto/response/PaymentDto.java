@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public record PaymentDto(
         Long id,
-        Long stripePaymentId,
+        String stripePaymentId,
         Long amount,
         String currency,
         String paymentMethodId,

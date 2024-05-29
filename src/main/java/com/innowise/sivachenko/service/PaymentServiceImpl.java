@@ -12,6 +12,7 @@ import com.innowise.sivachenko.model.exception.RefundPaymentException;
 import com.innowise.sivachenko.model.exception.ServiceNotFoundException;
 import com.innowise.sivachenko.repository.PaymentRepository;
 import com.innowise.sivachenko.service.api.PaymentService;
+import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
@@ -20,6 +21,7 @@ import com.stripe.param.RefundCreateParams;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -148,6 +150,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private PaymentEntity processPaymentByStatus(PaymentIntent paymentIntent, PaymentEntity payment) throws CannotCreatePaymentException, StripeException {
         log.info("Starting checking payment by status. Payment status: {}", paymentIntent.getStatus());
+        payment.setStripePaymentId(paymentIntent.getId());
         switch (PaymentStatus.valueOf(paymentIntent.getStatus().toUpperCase())) {
             case REQUIRES_PAYMENT_METHOD:
                 throw new CannotCreatePaymentException("Payment requires a valid payment method");
@@ -165,7 +168,8 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setPaymentStatus(PROCESSING);
                 return paymentRepository.save(payment);
             case CANCELED:
-                throw new CannotCreatePaymentException("Payment was canceled");
+                payment.setPaymentStatus(CANCELED);
+                return paymentRepository.save(payment);
             case SUCCEEDED:
                 payment.setPaymentStatus(SUCCEEDED);
                 return paymentRepository.save(payment);
@@ -174,59 +178,3 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 }
-
-/*
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
-import com.stripe.model.Event;
-import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
-import com.stripe.exception.SignatureVerificationException;
-
-@RestController
-public class StripeWebhookController {
-
-    private final PaymentRepository paymentRepository;
-    private static final String endpointSecret = "your_webhook_secret";
-
-    public StripeWebhookController(PaymentRepository paymentRepository) {
-        this.paymentRepository = paymentRepository;
-    }
-
-    @PostMapping("/webhook")
-    public String handleStripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
-        Event event;
-
-        try {
-            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
-        } catch (SignatureVerificationException e) {
-            // Некорректная подпись
-            return "Error";
-        }
-
-        if ("payment_intent.succeeded".equals(event.getType())) {
-            PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
-            if (paymentIntent != null) {
-                updatePaymentStatus(paymentIntent.getId(), PaymentStatus.SUCCEEDED);
-            }
-        } else if ("payment_intent.canceled".equals(event.getType())) {
-            PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
-            if (paymentIntent != null) {
-                updatePaymentStatus(paymentIntent.getId(), PaymentStatus.CANCELED);
-            }
-        }
-
-        return "Success";
-    }
-
-    private void updatePaymentStatus(String paymentIntentId, PaymentStatus newStatus) {
-        PaymentEntity payment = paymentRepository.findByPaymentIntentId(paymentIntentId);
-        if (payment != null) {
-            payment.setPaymentStatus(newStatus);
-            paymentRepository.save(payment);
-        }
-    }
-}
- */

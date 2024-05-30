@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @Configuration
 @RequiredArgsConstructor
@@ -14,15 +14,13 @@ public class FeignConfig {
 
     @Bean
     public RequestInterceptor requestInterceptor() {
-        return (requestTemplate) -> {
+        return requestTemplate -> {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication instanceof JwtAuthenticationToken jwtAuthToken) {
+                String tokenValue = jwtAuthToken.getToken().getTokenValue();
+                requestTemplate.header("Authorization", "Bearer " + tokenValue);
+            }
             requestTemplate.header("Is-Feign-Request", "true");
-            requestTemplate.header("Authorization", "Bearer " + extractAccessToken());
         };
-    }
-
-    private String extractAccessToken() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        OAuth2AuthorizedClient authorizedClient = (OAuth2AuthorizedClient) authentication.getDetails();
-        return authorizedClient.getAccessToken().getTokenValue();
     }
 }

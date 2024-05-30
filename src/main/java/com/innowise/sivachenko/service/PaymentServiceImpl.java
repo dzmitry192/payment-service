@@ -85,8 +85,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentDto createPayment(CreatePaymentDto createPaymentDto) throws ServiceNotFoundException, CannotCreatePaymentException {
         log.info("Starting creating a payment with body: {}", createPaymentDto);
-        if (rentServiceFeignClient.getRent(createPaymentDto.rentId()).getStatusCode().value() != 200) {
-            throw new CannotCreatePaymentException(String.format("Rent with id {%s} not found", createPaymentDto.rentId()));
+        if (rentServiceFeignClient.isRentPaid(createPaymentDto.rentId())) {
+            throw new CannotCreatePaymentException(String.format("Cannot create payment with rent id {%s}, because rent is not active", createPaymentDto.rentId()));
         }
         PaymentEntity payment = paymentMapper.toPaymentEntity(createPaymentDto);
 

@@ -1,0 +1,53 @@
+{
+    "type": "record",
+    "name": "PaymentServiceNotification",
+    "namespace": "com.innowise.sivachenko.kafka.avro",
+    "fields": [
+        {
+            "name": "email",
+            "type": "string"
+        },
+        {
+            "name": "paymentStatus",
+            "type": {
+                "type": "enum",
+                "name": "PaymentStatus",
+                "symbols": [
+                    "CANCELED",
+                    "PROCESSING",
+                    "SUCCEEDED",
+                    "REFUNDED",
+                    "REQUIRES_ACTION",
+                    "FAILED"
+                ]
+            }
+        },
+        {
+            "name": "amount",
+            "type": "long"
+        },
+        {
+            "name": "currency",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "type": {
+                "type": "long",
+                "logicalType": "timestamp-millis"
+            }
+        },
+        {
+            "name": "notificationType",
+            "type": {
+                "type": "enum",
+                "name": "PaymentNotificationType",
+                "symbols": [
+                    "CREATE_PAYMENT",
+                    "REFUND_PAYMENT",
+                    "CHANGE_PAYMENT_STATUS"
+                ]
+            }
+        }
+    ]
+}

@@ -24,7 +24,8 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-resources/**",
             "/v3/api-docs/**",
-            "/payment-service/v3/api-docs/**"
+            "/payment-service/v3/api-docs/**",
+            "/api/v1/payment-service/stripe/webhooks/**"
     };
 
     @Value(value = "${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")

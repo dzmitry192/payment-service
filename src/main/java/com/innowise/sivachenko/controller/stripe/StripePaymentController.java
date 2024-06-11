@@ -14,7 +14,7 @@ public class StripePaymentController {
 
     @PostMapping("/payment/status")
     public void handleChangedPaymentStatus(@RequestBody String payload,
-                                           @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
+                                           @RequestHeader("Stripe-Signature") String sigHeader) throws Exception {
         stripeService.handleChangedPaymentStatus(payload, sigHeader);
     }
 }

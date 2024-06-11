@@ -12,7 +12,8 @@ public enum PaymentStatus {
     REQUIRES_CONFIRMATION("requires_confirmation"),
     REQUIRES_PAYMENT_METHOD("requires_payment_method"),
     SUCCEEDED("succeeded"),
-    REFUNDED("refunded");
+    REFUNDED("refunded"),
+    FAILED("failed");
 
     private String statusName;
 

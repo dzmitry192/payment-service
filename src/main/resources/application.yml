@@ -1,3 +1,6 @@
+server:
+  port: 0
+
 spring:
   application:
     name: payment-service
@@ -23,13 +26,28 @@ spring:
           issuer-uri: http://localhost:8080/realms/carsharing
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
-server:
-  port: 6066
+  kafka:
+    bootstrap-servers: kafka:29092
+    properties:
+      schema:
+        registry:
+          url: http://schema-registry:9091
 
-feign:
+kafka:
+  topics:
+    audit-topic:
+      name: payment-service-audit-topic
+    notification-topic:
+      name: payment-service-notification-topic
+
+eureka:
+  instance:
+    prefer-ip-address: true
   client:
-    rent-service:
-      name: rent-service
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
 
 stripe:
   secretkey: sk_test_51PByRIFeeS6BFRDaPlNszYd3ZRlciywD9CHoGDFMsJAZ4d8tnWnDUbOYas50p6lYRmDQlUnPgW1LNRVOLQ635oxH0081dj6qkr
@@ -43,7 +61,22 @@ openapi:
     name: payment-service
     version: 1.0.0
     description: Payment service for working with payments
-    url: http://localhost:6066
+    url: http://localhost:8088
 
 springdoc:
   show-actuator: true
+  api-docs:
+    path: /payment-service/v3/api-docs
+  swagger-ui:
+    path: /payment-service/swagger-ui/index.html
+
+feign:
+  client:
+    rent-service:
+      name: rent-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

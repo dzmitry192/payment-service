@@ -6,6 +6,7 @@ import com.innowise.sivachenko.model.dto.request.CreatePaymentDto;
 import com.innowise.sivachenko.model.dto.response.PaymentDto;
 import com.innowise.sivachenko.model.entity.PaymentEntity;
 import com.innowise.sivachenko.model.enums.PaymentStatus;
+import com.innowise.sivachenko.model.enums.RentStatus;
 import com.innowise.sivachenko.model.exception.CannotCreatePaymentException;
 import com.innowise.sivachenko.model.exception.CannotDeletePaymentException;
 import com.innowise.sivachenko.model.exception.RefundPaymentException;
@@ -133,7 +134,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDto deletePaymentById(Long paymentId) throws ServiceNotFoundException, CannotDeletePaymentException {
-        log.info("Starting deleting payment with id: {}",paymentId);
         Optional<PaymentEntity> optionalPayment = paymentRepository.findById(paymentId);
         if (optionalPayment.isEmpty()) {
             throw new EntityNotFoundException("Payment with id " + paymentId + " not found");
@@ -146,16 +146,25 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.toPaymentDto(payment);
     }
 
-    private PaymentEntity processPaymentByStatus(PaymentIntent paymentIntent, PaymentEntity payment) throws CannotCreatePaymentException, StripeException {
+    private PaymentEntity processPaymentByStatus(PaymentIntent paymentIntent, PaymentEntity payment) throws CannotCreatePaymentException, StripeException, ServiceNotFoundException {
         log.info("Starting checking payment by status. Payment status: {}", paymentIntent.getStatus());
         payment.setStripePaymentId(paymentIntent.getId());
-        switch (PaymentStatus.valueOf(paymentIntent.getStatus().toUpperCase())) {
+
+        PaymentStatus status;
+        try {
+            status = PaymentStatus.valueOf(paymentIntent.getStatus().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CannotCreatePaymentException("Unknown payment status received: " + paymentIntent.getStatus());
+        }
+
+        switch (status) {
             case REQUIRES_PAYMENT_METHOD:
                 throw new CannotCreatePaymentException("Payment requires a valid payment method");
             case REQUIRES_CONFIRMATION:
                 throw new CannotCreatePaymentException("Payment requires confirmation");
             case REQUIRES_ACTION:
-                throw new CannotCreatePaymentException("Payment requires additional action");
+                payment.setPaymentStatus(REQUIRES_ACTION);
+                break;
             case REQUIRES_CAPTURE:
                 log.info("Starting capture...");
                 PaymentIntent intent = PaymentIntent.retrieve(paymentIntent.getId());
@@ -170,15 +179,11 @@ public class PaymentServiceImpl implements PaymentService {
                 break;
             case SUCCEEDED:
                 payment.setPaymentStatus(SUCCEEDED);
-
-                //send feign request to rent-service to change rent status to COMPLETED
-
+                rentServiceFeignClient.updateRentStatus(payment.getRentId(), RentStatus.COMPLETED);
                 break;
             default:
                 throw new CannotCreatePaymentException("Unknown payment status received");
         }
-        // send notification
-
         return paymentRepository.save(payment);
     }
 }

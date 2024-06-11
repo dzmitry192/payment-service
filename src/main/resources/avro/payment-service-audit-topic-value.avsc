@@ -1,0 +1,61 @@
+{
+    "type": "record",
+    "name": "AuditActionRequest",
+    "namespace": "com.innowise.sivachenko.kafka.avro",
+    "fields": [
+        {
+            "name": "email",
+            "type": "string",
+            "doc": "@Email"
+        },
+        {
+            "name": "info",
+            "type": "string",
+            "doc": "@NotBlank"
+        },
+        {
+            "name": "actionType",
+            "type": {
+                "type": "enum",
+                "name": "AuditActionType",
+                "symbols": [
+                    "GET",
+                    "POST",
+                    "PATCH",
+                    "PUT",
+                    "DELETE"
+                ]
+            },
+            "doc": "@NotBlank"
+        },
+        {
+            "name": "serviceType",
+            "type": {
+                "type": "enum",
+                "name": "AuditServiceType",
+                "symbols": [
+                    "CLIENT",
+                    "CAR",
+                    "RENT",
+                    "PAYMENT",
+                    "NOTIFICATION",
+                    "AUDIT"
+                ]
+            },
+            "doc": "@NotBlank"
+        },
+        {
+            "name": "actionStatus",
+            "type": "int",
+            "doc": "@NotNull"
+        },
+        {
+            "name": "actionTime",
+            "type": {
+                "type": "long",
+                "logicalType": "timestamp-millis"
+            },
+            "doc": "@NotNull"
+        }
+    ]
+}

@@ -12,7 +12,6 @@ import com.innowise.sivachenko.model.exception.RefundPaymentException;
 import com.innowise.sivachenko.model.exception.ServiceNotFoundException;
 import com.innowise.sivachenko.repository.PaymentRepository;
 import com.innowise.sivachenko.service.api.PaymentService;
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
@@ -21,7 +20,6 @@ import com.stripe.param.RefundCreateParams;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -85,7 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentDto createPayment(CreatePaymentDto createPaymentDto) throws ServiceNotFoundException, CannotCreatePaymentException {
         log.info("Starting creating a payment with body: {}", createPaymentDto);
-        if (rentServiceFeignClient.isRentPaid(createPaymentDto.rentId())) {
+        if (!rentServiceFeignClient.canPayRent(createPaymentDto.rentId())) {
             throw new CannotCreatePaymentException(String.format("Cannot create payment with rent id {%s}, because rent is not active", createPaymentDto.rentId()));
         }
         PaymentEntity payment = paymentMapper.toPaymentEntity(createPaymentDto);
@@ -141,7 +139,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new EntityNotFoundException("Payment with id " + paymentId + " not found");
         }
         PaymentEntity payment = optionalPayment.get();
-        if (rentServiceFeignClient.isRentActive(payment.getRentId())) {
+        if (rentServiceFeignClient.existsActiveRent(payment.getRentId(), null, null)) {
             throw new CannotDeletePaymentException(String.format("Couldn't delete payment exception, because rent with id {%s} is active", payment.getRentId()));
         }
         paymentRepository.delete(payment);
@@ -163,18 +161,24 @@ public class PaymentServiceImpl implements PaymentService {
                 PaymentIntent intent = PaymentIntent.retrieve(paymentIntent.getId());
                 intent.capture();
                 payment.setPaymentStatus(SUCCEEDED);
-                return paymentRepository.save(payment);
+                break;
             case PROCESSING:
                 payment.setPaymentStatus(PROCESSING);
-                return paymentRepository.save(payment);
+                break;
             case CANCELED:
                 payment.setPaymentStatus(CANCELED);
-                return paymentRepository.save(payment);
+                break;
             case SUCCEEDED:
                 payment.setPaymentStatus(SUCCEEDED);
-                return paymentRepository.save(payment);
+
+                //send feign request to rent-service to change rent status to COMPLETED
+
+                break;
             default:
                 throw new CannotCreatePaymentException("Unknown payment status received");
         }
+        // send notification
+
+        return paymentRepository.save(payment);
     }
 }

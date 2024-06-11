@@ -3,9 +3,11 @@ package com.innowise.sivachenko.model.dto.request;
 import com.innowise.sivachenko.validation.api.ValidAmount;
 import com.innowise.sivachenko.validation.api.ValidCurrency;
 import com.innowise.sivachenko.validation.api.ValidPaymentMethodId;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 
 public record CreatePaymentDto(
+        @Email String email,
         @ValidAmount Long amount,
         @ValidCurrency String currency,
         @ValidPaymentMethodId String paymentMethodId,

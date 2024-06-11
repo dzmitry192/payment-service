@@ -2,6 +2,8 @@ package com.innowise.sivachenko.model.entity;
 
 import com.innowise.sivachenko.model.enums.PaymentStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +20,10 @@ public class PaymentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Email
+    @Column(name = "email", nullable = false)
+    private String email;
 
     @Column(name = "stripe_payment_id", nullable = false)
     private String stripePaymentId;

@@ -13,14 +13,14 @@ public class RentServiceFallback implements FallbackFactory<RentServiceFeignClie
     public RentServiceFeignClient create(Throwable cause) {
         return new RentServiceFeignClient() {
             @Override
-            public Boolean isRentPaid(Long rentId) throws ServiceNotFoundException {
+            public Boolean canPayRent(Long rentId) throws ServiceNotFoundException {
                 log.info("Fallback for getRent; reason was: {}, {}", cause.getMessage(), cause);
                 throw new ServiceNotFoundException("Rent service is down. We are working to resolve the issue");
             }
 
             @Override
-            public Boolean isRentActive(Long rentId) throws ServiceNotFoundException {
-                log.info("Fallback for isRentActive; reason was: {}, {}", cause.getMessage(), cause);
+            public Boolean existsActiveRent(Long rentId, Long carId, Long clientId) throws ServiceNotFoundException {
+                log.info("Fallback for getRent; reason was: {}, {}", cause.getMessage(), cause);
                 throw new ServiceNotFoundException("Rent service is down. We are working to resolve the issue");
             }
         };

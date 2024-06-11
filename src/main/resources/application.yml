@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: payment-service
+  profiles:
+    active: test
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/paymentdb
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/carsharing
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+
+server:
+  port: 6066
+
+feign:
+  client:
+    rent-service:
+      name: rent-service
+
+stripe:
+  secretkey: sk_test_51PByRIFeeS6BFRDaPlNszYd3ZRlciywD9CHoGDFMsJAZ4d8tnWnDUbOYas50p6lYRmDQlUnPgW1LNRVOLQ635oxH0081dj6qkr
+  webhook:
+    secret: whsec_41892afaf0e493e918af2c1df7be3b7b032ebc6a8489943c0df04a8bbbbc8be0
+
+openapi:
+  oAuthFlow:
+    tokenUrl: http://localhost:8080/realms/carsharing/protocol/openid-connect/token
+  service:
+    name: payment-service
+    version: 1.0.0
+    description: Payment service for working with payments
+    url: http://localhost:6066
+
+springdoc:
+  show-actuator: true
